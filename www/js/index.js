@@ -31,9 +31,10 @@ function onDeviceReady() {
     document.getElementById('WebSocketStatus').innerText = "Essayez de vous connecter à l’aide de WebSocket à distance";
  
     // Create the Web socket !
-    const ws = new WebSocket('ws://15.188.125.40:8089');
+    const host = 'ws://127.0.0.1:8899';
+    const ws = new WebSocket(host);
     ws.onopen = function() {
-        console.log('WebSocket Client Connecté');
+        console.log('WebSocket Client Connecté:', host);
         //ws.send('Coucou, je suis web client ~ ');
     };
     ws.onmessage = function(e) {
