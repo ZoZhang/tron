@@ -28,17 +28,18 @@ function onDeviceReady() {
     document.getElementById('deviceready').classList.add('ready');
 
     // Say now we will try to connect using WebSocket
-    document.getElementById('WebSocketStatus').innerText = "Try to connect using WebSocket";
-
+    document.getElementById('WebSocketStatus').innerText = "Essayez de vous connecter à l’aide de WebSocket à distance";
+ 
     // Create the Web socket !
-    const ws = new WebSocket('ws://172.20.10.3:8889/');
+    const host = 'ws://127.0.0.1:8899';
+    const ws = new WebSocket(host);
     ws.onopen = function() {
-        console.log('WebSocket Client Connected');
-        ws.send('Hi this is web client.');
+        console.log('WebSocket Client Connecté:', host);
+        //ws.send('Coucou, je suis web client ~ ');
     };
     ws.onmessage = function(e) {
-        console.log("Received: '" + e.data + "'");
-        document.getElementById('WebSocketStatus').innerText = "Received from server :" + e.data;
+        console.log("Reçu du serveur : '" + e.data + "'");
+        document.getElementById('WebSocketStatus').innerText = "Reçu du serveur :" + e.data;
     };
 
 }

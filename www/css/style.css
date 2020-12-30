@@ -58,6 +58,19 @@ p {
     background-image: -o-linear-gradient(top, #f6f6f6, #eae8e8);
     background-image: linear-gradient(top, #f6f6f6, #eae8e8);
 }
+
+#canvas{
+    display: block;
+    margin: 0 auto;
+    padding: 1px;    
+    font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+    border: 1px solid #ccc;
+    background-color: #fff;
+    -moz-box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+    -webkit-box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+    box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+}
+
 #WebSocketStatus{
     color: rgb(17, 207, 33);
     font-family: 'Courier New', Courier, monospace;
