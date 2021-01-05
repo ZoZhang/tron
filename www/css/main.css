@@ -1,0 +1,30 @@
+body {
+    color:#fff;
+    background-color: #292929;
+}
+
+ul, li {
+    list-style:none;
+    line-height: 2rem;
+}
+
+.list-attente ul li {
+    background-color: #269a5a;
+    border-radius: 0.3rem;
+    margin-bottom:1rem;
+}
+
+.list-attente ul li:last-child {
+    background-color: #ec8817;
+}
+
+.plateau {
+    position: relative;
+    margin: 10px auto;
+    border: 2px solid #5fccc1;
+}
+
+.plateau-infor p {
+    margin:0;
+}
+
