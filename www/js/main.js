@@ -91,18 +91,18 @@
 
                 tron.params.LocalStorage = window.localStorage;
 
-                tron.params.localPesudo = tron.params.LocalStorage.getItem('pesudo');
-                if (tron.params.localPesudo) {
-                   tron.params.InputPesudo.val(tron.params.localPesudo);
+                tron.params.LocalPesudo = tron.params.LocalStorage.getItem('pesudo');
+                if (tron.params.LocalPesudo) {
+                   tron.params.InputPesudo.val(tron.params.LocalPesudo);
                    tron.params.BlockInputPesudo.addClass('d-none');
-                   tron.params.BlockShowPesudo.find('span').text(tron.params.localPesudo).end().removeClass('d-none');
+                   tron.params.BlockShowPesudo.find('span').text(tron.params.LocalPesudo).end().removeClass('d-none');
                    tron.params.LayoutPesudo.removeClass('d-none');
                 } else {
                     tron.params.BlockInputPesudo.removeClass('d-none');
                     tron.params.LayoutPesudo.removeClass('d-none');
                 }
 
-                tron.params.localCouleur = JSON.parse(tron.params.LocalStorage.getItem('couleur'));
+                tron.params.LocalCouleur = JSON.parse(tron.params.LocalStorage.getItem('couleur'));
             },
 
             // initialise la valeur du couteur
@@ -125,7 +125,7 @@
 
                 // button
                 // tron.params.ButtonStart.click(tron.start);
-                tron.params.ButtonStop.click(tron.stop);
+                tron.params.ButtonStop.click(tron.stopJeux);
             },
 
             // initialise connexion websocket
@@ -151,19 +151,19 @@
 
                e.preventDefault();
 
-               tron.params.localPesudo = tron.params.InputPesudo.val();
+               tron.params.LocalPesudo = tron.params.InputPesudo.val();
 
-                if (!tron.params.localPesudo) {
+                if (!tron.params.LocalPesudo) {
                  tron.params.InputPesudo.attr('placeholder', 'Vous devez saissir votre pesudo !');
                  return false;
                }
 
                const random = Math.floor(Math.random() * tron.params.couleurs.length);
-               tron.params.localCouleur = tron.params.couleurs[random];
+               tron.params.LocalCouleur = tron.params.couleurs[random];
 
                tron.params.userData = {
-                   pesudo: tron.params.localPesudo,
-                   couleur: tron.params.localCouleur
+                   pesudo: tron.params.LocalPesudo,
+                   couleur: tron.params.LocalCouleur
                };
 
                tron.params.socket.emit('initialiseData', tron.params.userData, function(res){
@@ -171,8 +171,8 @@
 
                    if (res.success) {
                         tron.params.InputAlert.addClass('d-none');
-                        tron.params.LocalStorage.setItem('pesudo', tron.params.localPesudo);
-                        tron.params.LocalStorage.setItem('couleur', JSON.stringify(tron.params.localCouleur));
+                        tron.params.LocalStorage.setItem('pesudo', tron.params.LocalPesudo);
+                        tron.params.LocalStorage.setItem('couleur', JSON.stringify(tron.params.LocalCouleur));
                         tron.listAttenteStart();
                     } else {
                         tron.params.InputAlert.text(res.message).removeClass('d-none');
@@ -191,35 +191,59 @@
 
                tron.params.LayoutPesudo.addClass('d-none');
                tron.params.LayoutJeu.removeClass('d-none');
-               tron.params.LayoutAttente.find('ul li:first-child').css('background-color', tron.params.localCouleur.value).children('span').text(tron.params.localPesudo).end().end().removeClass('d-none');;
+               tron.params.LayoutAttente.find('ul li:first-child').css('background-color', tron.params.LocalCouleur.value).children('span').text(tron.params.LocalPesudo).end().end().removeClass('d-none');;
             },
 
             // update la list d'attent
             listAttenteUpdate: function(res) {
 
-               if (!res) {
-                return false;
-               }
-
                // layout
                tron.initializCouter();
                tron.params.LayoutAttente.find('ul li:last-child').css('background-color', res.couleur.value).html('<span>'+res.pesudo+'</span> - Prêt').removeClass('d-none');;
 
-               console.log(res);
+               // donee
+               if (!res) {
+                   tron.params.InputAlert.text('Il y a un erreur du serveur, veuillez actualiser la page et recommencer!').removeClass('d-none');
+                   return false;
+               }
+
+               tron.params.LocalConcurrent = res;
+
+               tron.startJeux();
+            },
+
+            // initialise le plateu du jeux
+            startJeux: function() {
+
+                // update donée
+                tron.params.LayoutPlateau.find('.joeur1 p > span:first-child').text(tron.params.LocalPesudo);
+                tron.params.LayoutPlateau.find('.joeur1 p > span:last-child').text(0);
+
+                tron.params.LayoutPlateau.find('.joeur2 p > span:first-child').text(tron.params.LocalConcurrent.pesudo);
+                tron.params.LayoutPlateau.find('.joeur2 p > span:last-child').text(0);
+
+                // layout
+                tron.params.LayoutAttente.addClass('d-none');
+                tron.params.LayoutPlateau.removeClass('d-none');
             },
 
             // initialise les layouts par défauts et les valeurs par défauts
-            stop: function() {
+            stopJeux: function() {
 
                 tron.initializValues();
-
                 tron.initializCouter();
 
                 tron.params.LayoutPesudo.removeClass('d-none');
                 tron.params.LayoutJeu.addClass('d-none');
                 tron.params.LayoutAttente.addClass('d-none');
-            },
+                tron.params.LayoutPlateau.addClass('d-none');
 
+                tron.params.socket.emit('deconnexion', function(res){
+                    console.log(res);
+                });
+
+                return false;
+            },
        };
 
        if (typeof cordova != 'undefined') {
