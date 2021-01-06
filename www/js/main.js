@@ -44,6 +44,8 @@
 
                 tron.initializValues();
 
+                tron.initializCouter();
+
                 tron.initializEvents();
 
                 tron.initializWebSocket();
@@ -100,7 +102,7 @@
                     tron.params.LayoutPesudo.removeClass('d-none');
                 }
 
-                tron.params.localCouleur = JSON.parse(tron.params.LocalStorage.getItem('couleur')) || '[{}]';
+                tron.params.localCouleur = JSON.parse(tron.params.LocalStorage.getItem('couleur'));
             },
 
             // initialise la valeur du couteur
@@ -137,7 +139,10 @@
                 });
 
                 tron.params.socket.on('updateListAttente', (res) => {
-                  tron.listAttenteUpdate(res);
+
+                    console.log(res);
+
+                    tron.listAttenteUpdate(res);
                 });
             },
 
@@ -148,22 +153,26 @@
 
                tron.params.localPesudo = tron.params.InputPesudo.val();
 
-               if (!tron.params.localPesudo) {
+                if (!tron.params.localPesudo) {
                  tron.params.InputPesudo.attr('placeholder', 'Vous devez saissir votre pesudo !');
                  return false;
                }
 
                const random = Math.floor(Math.random() * tron.params.couleurs.length);
-               tron.params.localCouleur = JSON.stringify(tron.params.couleurs[random]);
+               tron.params.localCouleur = tron.params.couleurs[random];
 
                tron.params.userData = {
                    pesudo: tron.params.localPesudo,
-                   couleur: JSON.parse(tron.params.localCouleur)
+                   couleur: tron.params.localCouleur
                };
 
                tron.params.socket.emit('initialiseData', tron.params.userData, function(res){
-                    if (res.success) {
+                   console.log(res);
+
+                   if (res.success) {
                         tron.params.InputAlert.addClass('d-none');
+                        tron.params.LocalStorage.setItem('pesudo', tron.params.localPesudo);
+                        tron.params.LocalStorage.setItem('couleur', JSON.stringify(tron.params.localCouleur));
                         tron.listAttenteStart();
                     } else {
                         tron.params.InputAlert.text(res.message).removeClass('d-none');

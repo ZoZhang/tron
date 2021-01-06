@@ -3,65 +3,82 @@
 const port = 8899;
 const clients = {
     joueurs: {},
-    attentes: []
+    attentes: {
+        intervalId: null,
+        joueurs: []
+    },
 };
 
 const io = require('socket.io')(port);
 
-io.on('connection', socket => {
+io.sockets.on('connection', socket => {
 
-  const socketId = socket.id;
+    // effacer les données au joueur actuelle
+    socket.on('disconnect', () => {
 
-  // effacer les données au joueur actuelle
-  socket.on('disconnect', (data) => {
+       delete clients.joueurs[socket.id];
+       clients.attentes.joueurs.remove(socket.id);
 
-        delete clients.joueurs[socketId];
-        clients.attentes = arrayRemove(clients.attentes, socketId);
+       console.log("client déconnectée:" + socket.id, clients);
+    });
 
-        console.log(clients.attentes);
-  });
-
-  // validation la disponibilité du pesudo et couleur
-  socket.on('initialiseData', (joueur, callback) => {
+    // validation la disponibilité du pesudo et couleur
+    socket.on('initialiseData', (joueur, callback) => {
 
         // initialise les donées du joueurs
-        if (!clients.joueurs[socketId]) {
-            clients.joueurs[socketId] = joueur;
-            clients.attentes.push(socketId);
+        if (!clients.joueurs[socket.id]) {
+            clients.joueurs[socket.id] = joueur;
+
+            clients.attentes.joueurs.push(socket.id);
+
             callback({success: true, message: 'Votre pesudo est disponible.'});
         } else {
             callback({success: false, message: 'Votre pesudo n\'est plus disponible !'});
         }
 
+    });
+
+    // mise à jour la list d'attente.
+    clients.attentes.intervalId = setInterval(updateListAttente, 1000);
+
+    // mise à jour les doneées à la list d'attente
+    function updateListAttente() {
+
         // gere les joueurs dans la liste d'attente.
-        if (clients.attentes.length > 1) {
+        if (clients.attentes.joueurs.length <= 1) {
+            return;
+        }
 
-        console.log(clients.attentes);
+        for(let idx in clients.attentes.joueurs) {
+            const clientSocketId = clients.attentes.joueurs[idx];
 
-            for(let idx in clients.attentes) {
-                const clientSocketId = clients.attentes[idx];
+            // exclure le joueur actuel
+            if (socket.id == clientSocketId) {
+                continue;
+            }
 
-                // exclure le joueur actuel
-                if (socketId == clientSocketId) {
-                    continue;
-                }
-
-                // vérifiez si l'utilisateur en file d'attente existe
-                if (!clients.joueurs[clientSocketId]) {
-                    clients.attentes = arrayRemove(clients.attentes, clientSocketId);
-                } else {
-                    // envoyer d'autres jouerus du données au client actuel
-                    console.log('update list attent..');
-                    socket.emit('updateListAttente', clients.joueurs[clientSocketId]);
-                }
+            // vérifiez si l'utilisateur en file d'attente existe
+            if (typeof clients.joueurs[clientSocketId] == "undefined") {
+                clients.attentes.joueurs.remove(clientSocketId);
+            } else {
+                io.to(socket.id).emit('updateListAttente', clients.joueurs[clientSocketId]);
             }
         }
-  });
 
+
+    }
 
 });
 
-function arrayRemove(arr, idx) {
-    const idxOf = arr.indexOf(idx);
-    return arr.splice(idxOf, 1);
-}
+
+// remove un element sur un table par son valeur.
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
