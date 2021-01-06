@@ -15,52 +15,52 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-6 pt-5 text-center m-auto">
-                <h1 class="title"><img src="img/logo.png"></h1>
+                <h1 class="logo"><img src="img/logo.png"></h1>
 
-                <div id="layout-pesudo">
-                    <div id="block-input-pesudo" class="form-group mt-5 d-none">
-                        <label for="pesudo" class="col-sm-2 col-form-label mb-2"><strong>Pesudo</strong></label>
-                        <input type="text" class="form-control" id="pesudo" autofocus placeholder="Entrez votre pesudo.">
-                        <small class="form-text text-muted text-center">Veuillez entrer votre pseudo, puis cliquez "Entrez" pour aller dans la list d'attente du jeu.</small>
-                    </div>
-                    <div id="block-show-pesudo" class="d-none">
-                        <h3>Bonjour, <span></span> !</h3>
-                        <small class="form-text text-muted text-center">Veuillez cliquez pour aller dans la list d'attente du jeu.</small>
-                    </div>
-                    <button type="submit" id="commencer" class="btn mt-3 btn-success">Entrez</button>
-                </div>
-
-                <div id="layout-jeu" class="d-none">
-                    <div id="layout-attente" class="d-none">
-                        <h2>List d'attente</h2>
-                        <small class="form-text text-muted text-left">Attendez que d'autres joueurs entrent, puis le jeu commencera automatiquement.</small>
-                        <div class="list-attente form-group mt-5">
-                            <ul>
-                                <li><span></span> - Prêt</li>
-                                <li>En attente de l'entrée d'autres joueurs... <span>0</span>s</li>
-                            </ul>
+                <form id="main-form">
+                    <div id="layout-pesudo" class="d-none">
+                        <div id="block-input-pesudo" class="form-group mt-5 d-none">
+                            <label for="pesudo" class="col-sm-2 col-form-label mb-2"><strong>Pesudo</strong></label>
+                            <input type="text" class="form-control" id="pesudo" placeholder="Entrez votre pesudo." autofocus/>
+                            <p id="input-alert" class="alert alert-warning mt-3 text-left d-none"></p>
+                            <small class="form-text text-muted text-center">Veuillez entrer votre pseudo, puis cliquez "Entrez" pour aller dans la list d'attente du jeu.</small>
                         </div>
+                        <div id="block-show-pesudo" class="d-none">
+                            <h3>Bonjour, <span></span> !</h3>
+                            <small class="form-text text-muted text-center">Entrez pour aller dans la list d'attente du jeu.</small>
+                        </div>
+                        <button type="submit" id="commencer" class="btn mt-3 btn-success">Entrez</button>
                     </div>
 
-                    <div id="layout-plateau" class="d-none">
-                        <div class="plateau-infor">
-                            <div class="row">
-                                <div class="joeur1 col text-left">
-                                    <p><span>ZoZhang</span> : <span>1223</span></p>
-                                </div>
-                                <div class="joeur2 col text-right">
-                                    <p><span>ZoZhang</span> : <span>1223</span></p>
-                                </div>
+                    <div id="layout-jeu" class="d-none">
+                        <div id="layout-attente" class="d-none">
+                            <h2>List d'attente</h2>
+                            <small class="form-text text-muted text-center">Attendez que d'autres joueurs entrent, puis le jeu commencera automatiquement.</small>
+                            <div class="list-attente form-group w-80 m-auto">
+                                <ul class="mt-3">
+                                    <li><span></span> - Prêt</li>
+                                    <li>Attente de l'entrée d'autres joueurs.. <span>0</span>s</li>
+                                </ul>
                             </div>
                         </div>
-                        <div class="plateau">
-                            ssfd
+
+                        <div id="layout-plateau" class="d-none">
+                            <div class="plateau-infor">
+                                <div class="row">
+                                    <div class="joeur1 col text-left">
+                                        <p><span></span> : <span></span></p>
+                                    </div>
+                                    <div class="joeur2 col text-right">
+                                        <p><span></span> : <span></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="plateau">
+                            </div>
                         </div>
+                      <button type="submit" id="quitte" class="btn mt-3 btn-danger">Quitter</button>
                     </div>
-
-                    <button type="submit" id="quitte" class="btn mt-3 btn-danger">Quitter</button>
-                </div>
-
+                </form>
             </div>
         </div>
     </div>

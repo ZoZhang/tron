@@ -19,10 +19,15 @@
     "plugins": {
       "cordova-plugin-whitelist": {}
     },
-    "platforms": []
+    "platforms": [
+      "android",
+      "browser"
+    ]
   },
   "dependencies": {
     "brower": "0.0.2",
+    "cordova-android": "9.0.0",
+    "cordova-browser": "6.0.0",
     "socket.io": "^3.0.4"
   }
 }

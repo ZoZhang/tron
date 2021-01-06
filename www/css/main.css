@@ -3,9 +3,14 @@ body {
     background-color: #292929;
 }
 
+.logo {
+    margin-bottom: 1.5rem;
+}
+
 ul, li {
     list-style:none;
     line-height: 2rem;
+    padding: 0;
 }
 
 .list-attente ul li {
@@ -28,3 +33,12 @@ ul, li {
     margin:0;
 }
 
+@media screen and (min-width: 200px) and (max-width: 640px) {
+
+     .logo img {
+        max-width: 70%;
+     }
+
+
+
+}
