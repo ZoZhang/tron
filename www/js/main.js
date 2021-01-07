@@ -33,7 +33,6 @@
                     { label: 'greenblue', value: '#00BCD4' },
                     { label: 'pink', value: '#E91E63' },
                     { label: 'purple', value: '#B71C1C' },
-                    { label: 'violet', value: '#4A148C' }
                 ]
             },
 
@@ -49,9 +48,12 @@
                 tron.initializEvents();
 
                 tron.initializWebSocket();
+
+                // debugs
+                //tron.startJeux();
             },
 
-            // initialise les paramètres du HTML
+            // initialise les variables d'element du HTML
             initializParams: function() {
 
                 // buttons
@@ -61,28 +63,37 @@
                 // form
                 tron.params.MainForm = $('#main-form');
 
+                // canvas
+                tron.params.MainCanvas = document.getElementById('main-canvas');
+                tron.params.MainCtx = tron.params.MainCanvas.getContext('2d')
+
                 // input
-                tron.params.InputPesudo = $('#pesudo');
+                tron.params.InputPesudo = $('#pseudo');
 
                 //alert
-                tron.params.InputAlert = $('#input-alert');
+                tron.params.AlertSuccess = $('.alert-success');
+                tron.params.AlertWarning = $('.alert-warning');
 
                 // layout
-                tron.params.LayoutPesudo = $('#layout-pesudo');
+                tron.params.LayoutPesudo = $('#layout-pseudo');
                 tron.params.LayoutJeu = $('#layout-jeu');
                 tron.params.LayoutAttente = $('#layout-attente');
                 tron.params.LayoutPlateau = $('#layout-plateau');
 
                 // block
-                tron.params.BlockInputPesudo = $('#block-input-pesudo');
-                tron.params.BlockShowPesudo = $('#block-show-pesudo');
+                tron.params.BlockInputPesudo = $('#block-input-pseudo');
+                tron.params.BlockShowPesudo = $('#block-show-pseudo');
 
+                if(!tron.params.MainCanvas.getContext) {
+                    tron.params.AlertWarning.text('Votre navigateur ne prend pas en charge le canevas !').removeClass('d-none');
+                    return false;
+                }
             },
 
             // initialise les valeurs d'objet ou html
             initializValues: function() {
 
-                // initialise la valeur pesudo par LocalStorage
+                // initialise la valeur pseudo par LocalStorage
                 if (!window.localStorage) {
                     tron.params.BlockInputPesudo.removeClass('d-none');
                     console.log('cette navigateur ne support pas LocalStorage !');
@@ -91,18 +102,12 @@
 
                 tron.params.LocalStorage = window.localStorage;
 
-                tron.params.LocalPesudo = tron.params.LocalStorage.getItem('pesudo');
+                tron.params.LocalPesudo = tron.params.LocalStorage.getItem('pseudo');
                 if (tron.params.LocalPesudo) {
                    tron.params.InputPesudo.val(tron.params.LocalPesudo);
-                   tron.params.BlockInputPesudo.addClass('d-none');
-                   tron.params.BlockShowPesudo.find('span').text(tron.params.LocalPesudo).end().removeClass('d-none');
-                   tron.params.LayoutPesudo.removeClass('d-none');
-                } else {
                     tron.params.BlockInputPesudo.removeClass('d-none');
                     tron.params.LayoutPesudo.removeClass('d-none');
                 }
-
-                tron.params.LocalCouleur = JSON.parse(tron.params.LocalStorage.getItem('couleur'));
             },
 
             // initialise la valeur du couteur
@@ -138,44 +143,58 @@
                   console.log('WebSocket Client Connecté:', host);
                 });
 
+                // mise a jour la liste d'attente du jouer
                 tron.params.socket.on('updateListAttente', (res) => {
-
-                    console.log(res);
-
                     tron.listAttenteUpdate(res);
                 });
+
+                // mise a jour les positions du jouer de distance.
+                tron.params.socket.on('updateJoeurMatchsPosition', (res) => {
+                    console.log(res);
+                });
+                
             },
 
-            // validate la disponibilité du pesudo
+            // validate la disponibilité du pseudo
             initialiseData: function(e) {
 
                e.preventDefault();
 
                tron.params.LocalPesudo = tron.params.InputPesudo.val();
 
-                if (!tron.params.LocalPesudo) {
-                 tron.params.InputPesudo.attr('placeholder', 'Vous devez saissir votre pesudo !');
+               if (!tron.params.LocalPesudo) {
+                 tron.params.InputPesudo.attr('placeholder', 'Vous devez saissir votre pseudo !');
                  return false;
                }
 
-               const random = Math.floor(Math.random() * tron.params.couleurs.length);
-               tron.params.LocalCouleur = tron.params.couleurs[random];
-
                tron.params.userData = {
-                   pesudo: tron.params.LocalPesudo,
-                   couleur: tron.params.LocalCouleur
+                   pseudo: tron.params.LocalPesudo,
+                   direction: null,
+                   position: [
+                       {
+                           x: 26,
+                           y: 40
+                       }
+                   ]
                };
 
-               tron.params.socket.emit('initialiseData', tron.params.userData, function(res){
-                   console.log(res);
-
+               tron.params.socket.emit('initialiseData', tron.params.userData, function(res) {
                    if (res.success) {
-                        tron.params.InputAlert.addClass('d-none');
-                        tron.params.LocalStorage.setItem('pesudo', tron.params.LocalPesudo);
-                        tron.params.LocalStorage.setItem('couleur', JSON.stringify(tron.params.LocalCouleur));
-                        tron.listAttenteStart();
+                        tron.params.AlertWarning.addClass('d-none');
+                        tron.params.LocalStorage.setItem('pseudo', res.joueur.pseudo);
+                        tron.params.LocalStorage.setItem('couleur', res.joueur.couleur);
+
+                         // layout
+                        tron.params.ListAttenteCounter = window.setInterval(function(){
+                           tron.params.LayoutAttente.find('ul li:last-child span').text(tron.params.ListAttenteCounterVal++);
+                        }, 1000);
+
+                        tron.params.LayoutPesudo.addClass('d-none');
+                        tron.params.LayoutJeu.removeClass('d-none');
+                        tron.params.LayoutAttente.find('ul li:first-child').css('background-color', res.joueur.couleur).children('span').text(res.joueur.pseudo).end().end().removeClass('d-none');;
+
                     } else {
-                        tron.params.InputAlert.text(res.message).removeClass('d-none');
+                        tron.params.AlertWarning.text(res.message).removeClass('d-none');
                     }
                });
 
@@ -184,66 +203,215 @@
 
             // initialise les layout différents dans le HTML
             listAttenteStart: function() {
-               // layout
-               tron.params.ListAttenteCounter = window.setInterval(function(){
-                   tron.params.LayoutAttente.find('ul li:last-child span').text(tron.params.ListAttenteCounterVal++);
-               }, 1000);
 
-               tron.params.LayoutPesudo.addClass('d-none');
-               tron.params.LayoutJeu.removeClass('d-none');
-               tron.params.LayoutAttente.find('ul li:first-child').css('background-color', tron.params.LocalCouleur.value).children('span').text(tron.params.LocalPesudo).end().end().removeClass('d-none');;
             },
 
             // update la list d'attent
-            listAttenteUpdate: function(res) {
+            listAttenteUpdate: function(joueur) {
+
+               // donee
+               if (!joueur || !Array.isArray(joueur)) {
+                  tron.params.AlertWarning.text('Il y a un erreur du serveur, veuillez recommencer le jeux!').removeClass('d-none');
+                  return false;
+               }
 
                // layout
                tron.initializCouter();
-               tron.params.LayoutAttente.find('ul li:last-child').css('background-color', res.couleur.value).html('<span>'+res.pesudo+'</span> - Prêt').removeClass('d-none');;
+               tron.params.JoueurMatchs = joueur;
+               tron.params.LayoutAttente.find('ul li:last-child').css('background-color', tron.params.JoueurMatchs[1].couleur).html('<span>'+tron.params.JoueurMatchs[1].pseudo+'</span> - Prêt').removeClass('d-none');;
 
-               // donee
-               if (!res) {
-                   tron.params.InputAlert.text('Il y a un erreur du serveur, veuillez actualiser la page et recommencer!').removeClass('d-none');
-                   return false;
-               }
+               // commence le jeux dans 3 second.
+               let startJeuxCount = 3;
+               const alertSuccess = '<p class="count-start-jeux">le jeu démarrera automatiquement après un compte à rebours de <span>'+startJeuxCount+'</span> secondes !</p>';
 
-               tron.params.LocalConcurrent = res;
+               tron.params.LayoutAttente.find('.header').addClass('d-none');
+               tron.params.AlertSuccess.html(alertSuccess).removeClass('d-none');
 
-               tron.startJeux();
+               const StartJeuxCountInterval = setInterval(function(){
+                   $('.count-start-jeux', tron.params.AlertSuccess).find('span').text(--startJeuxCount);
+                   if (--startJeuxCount <= 0) {
+                       tron.startJeux();
+                       clearInterval(StartJeuxCountInterval);
+                   }
+               }, 1000)
             },
 
             // initialise le plateu du jeux
             startJeux: function() {
 
-                // update donée
-                tron.params.LayoutPlateau.find('.joeur1 p > span:first-child').text(tron.params.LocalPesudo);
-                tron.params.LayoutPlateau.find('.joeur1 p > span:last-child').text(0);
+               // debug donées
+               // tron.params.JoueurMatchs = [
+               //     {
+               //         pseudo: 'test1',
+               //         couleur: '#B71C1C',
+               //         direction: '',
+               //         position: [
+               //             {
+               //                 x: 26,
+               //                 y: 40
+               //             }
+               //         ]
+               //     },
+               //
+               //     {
+               //         pseudo: 'test2',
+               //         couleur: '#2E7D32',
+               //         direction: '',
+               //         position: [
+               //             {
+               //                 x: 26,
+               //                 y: 0
+               //             }
+               //         ]
+               //     }
+               // ];
 
-                tron.params.LayoutPlateau.find('.joeur2 p > span:first-child').text(tron.params.LocalConcurrent.pesudo);
-                tron.params.LayoutPlateau.find('.joeur2 p > span:last-child').text(0);
+               if (!tron.params.JoueurMatchs || !Array.isArray(tron.params.JoueurMatchs)) {
+                   tron.params.AlertWarning.text('Il y a un erreur du serveur, veuillez recommencer le jeux!').removeClass('d-none');
+                   return false;
+               }
 
-                // layout
-                tron.params.LayoutAttente.addClass('d-none');
-                tron.params.LayoutPlateau.removeClass('d-none');
+               console.log(tron.params.JoueurMatchs);
+
+               // update joueur pseudo
+               for(let i=0;i<tron.params.JoueurMatchs.length;i++) {
+                   tron.params.LayoutPlateau.find('.joeur'+ (i+1) +' p > span:first-child').text(tron.params.JoueurMatchs[i].pseudo).css('color', tron.params.JoueurMatchs[i].couleur);
+               }
+
+               //mise a jour la position du jouer distance par defaut.
+               tron.params.JoueurMatchs[1].position[0].y = 0;
+
+               // initialise canvas
+               tron.initialiseCanvas();
+
+               // layout
+               tron.params.LayoutJeu.removeClass('d-none');
+               tron.params.LayoutAttente.addClass('d-none');
+               tron.params.LayoutPlateau.removeClass('d-none');
+           },
+
+           // initialise les layouts par défauts et les valeurs par défauts
+           stopJeux: function() {
+
+               tron.initializValues();
+               tron.initializCouter();
+
+               tron.params.LayoutPesudo.removeClass('d-none');
+               tron.params.LayoutJeu.addClass('d-none');
+               tron.params.LayoutAttente.addClass('d-none');
+               tron.params.LayoutPlateau.addClass('d-none');
+
+               tron.params.socket.emit('deconnexion', function(res){
+                   console.log(res);
+               });
+
+               return false;
+           },
+
+           // initialise le canvas
+           initialiseCanvas: function() {
+
+                // le size de cellule "tron"
+                tron.params.MainCanvas.cw = 10;
+
+                if(typeof tron.params.MainCanvas.gameLoop != "undefined"){
+                   clearInterval(tron.params.MainCanvas.gameLoop);
+                }
+
+                tron.params.MainCtx.clearRect(0,0, tron.params.MainCanvas.width, tron.params.MainCanvas.height);
+
+                //Dessin éléments de grille sur l'écran
+                tron.params.MainCtx.strokeStyle = "#eee";
+                tron.params.MainCtx.stroke();
+                tron.params.MainCanvas.gameLoop = setInterval(tron.draw, 200); //--Vitesse de "tron"
+
+                //Gestion des direction avec les boutons du clavier
+                $(document).keydown(function(e) {
+                   var key = e.which;
+                   if(key == "37" && tron.params.MainCanvas.direction!= "right") tron.params.JoueurMatchs[0].direction = "left";
+                   else if(key == "39" && tron.params.MainCanvas.direction!= "left") tron.params.JoueurMatchs[0].direction = "right";
+               });
             },
 
-            // initialise les layouts par défauts et les valeurs par défauts
-            stopJeux: function() {
+            // Le algorithme de jeu
+            draw: function() {
+                var headTron; //le cellule qui contient les coordonnées du futur tete(moto) du tron
 
-                tron.initializValues();
-                tron.initializCouter();
+                // création les motos du tron avec les données des jouers.
+                for(let i = 0;i<tron.params.JoueurMatchs.length;i++) {
 
-                tron.params.LayoutPesudo.removeClass('d-none');
-                tron.params.LayoutJeu.addClass('d-none');
-                tron.params.LayoutAttente.addClass('d-none');
-                tron.params.LayoutPlateau.addClass('d-none');
+                    for(let j = 0; j < tron.params.JoueurMatchs[i].position.length; j++) {
 
-                tron.params.socket.emit('deconnexion', function(res){
-                    console.log(res);
-                });
+                        //l'obtention de la position actuelle de la tete(moto) du tron
+                        var nx = tron.params.JoueurMatchs[i].position[j].x,
+                            ny = tron.params.JoueurMatchs[i].position[j].y;
 
-                return false;
+                        //on change la direction du tron en fonction de la valeur de la variable de "direction"(left|right|up|down)
+                        switch(tron.params.JoueurMatchs[i].direction) {
+                            case 'left':
+                                  nx--;
+                                  ny++;
+                                  tron.params.JoueurMatchs[i].direction = '';
+                                break;
+                            case 'right':
+                                  nx++;
+                                  ny++;
+                                  tron.params.JoueurMatchs[i].direction = '';
+                                break;
+                        }
+
+                        // avancement automatiquement par les deux directions ( haut et bas ).
+                        if (i == 0) {
+                            ny--;
+                        } else {
+                            ny++;
+                        }
+
+                        //vérifions la collision du Tron avec lui-même ou avec les taille de la grille de canvas
+                        if (nx == -1 || nx == tron.params.MainCanvas.width / tron.params.MainCanvas.cw || ny == -1 || ny == tron.params.MainCanvas.height / tron.params.MainCanvas.cw || tron.checkCollision(nx, ny, tron.params.JoueurMatchs[i].position)) {
+                            //tron.initialiseCanvas();
+                            //return;
+                        } else {
+                            //Si il y n'avait pas, créons une nouvelle cellule avec les nouvelles coordonnées
+                            headTron = {x: nx, y: ny}
+                            headTron.x = nx;
+                            headTron.y = ny;
+
+                            //Ajoute de cellule "headTron" au début de la tableaux joueur matchs
+                            tron.params.JoueurMatchs[i].position.unshift(headTron);
+                        }
+
+                        // nettoye les anciennes cellules dans les cellules actuelles du jouer actuelle
+                        if (i == 0 ) {
+                            break;
+                        }
+                    }
+
+                    if (i == 0 ) {
+                        tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[i]);
+                    }
+
+                    //dessin de trajectoire de tron
+                    for(let k = 0; k < tron.params.JoueurMatchs[i].position.length; k++){
+                        let cell = tron.params.JoueurMatchs[i].position[k];
+                        tron.params.MainCtx.fillStyle = tron.params.JoueurMatchs[i].couleur; //-- couleur de tron
+                        tron.params.MainCtx.fillRect(cell.x*tron.params.MainCanvas.cw, cell.y*tron.params.MainCanvas.cw, tron.params.MainCanvas.cw, tron.params.MainCanvas.cw);
+                    }
+                }
+
+                //la direction du tron
+                //tron.params.MainCanvas.direction = 'down';
+
+                //console.log(tron.params.MainCanvas.width);
             },
+
+            //vérification les zones de collision
+            checkCollision: function(x,y,array){
+               for(var i = 0; i<array.length; i++){
+                   if(array[i].x == x && array[i].y == y) return true;
+               }
+               return false;
+            }
        };
 
        if (typeof cordova != 'undefined') {
