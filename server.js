@@ -1,16 +1,18 @@
 // socket.io websocket services
 
 const port = 8899;
-const clients = {
+const servers = {
+    couleurs : [
+        '#2e8833', '#00BCD4', '#E91E63', '#cb2222'
+    ],
     data: {
-        currentSockId: null,
-        joueurs: {}
-        
+        currentSockId: null, // l'id du websocket dont le client connecté.
+        joueurs: {} // tout les donées des joueurs en ligne.
     },
     attentes: {
-        intervalId: null,
-        joueurs: [],
-        matchs: [],
+        intervalId: null, // l'id d'interval d'event du matchs list d'attente.
+        joueurs: [], // les ids des joueurs dans la liste d'attente
+        matchs: [], // les deux ids sur les joueurs dans la liste matchs.
     },
 };
 
@@ -18,55 +20,65 @@ const io = require('socket.io')(port);
 
 io.sockets.on('connection', socket => {
 
-    clients.currentSockId = socket.id;
-    console.log('nouveau joueur connecté:' + clients.currentSockId);
+    socket.id = socket.id;
+    console.log('nouveau joueur connecté:' + socket.id);
 
     // effacer les données au joueur quitté
     socket.on('disconnect', cleanJoueursQuitte);
     socket.on('deconnexion', cleanJoueursQuitte);
 
-    // validation la disponibilité du pesudo et couleur
+    // validation la disponibilité du pseudo et couleur
     socket.on('initialiseData', (joueur, callback) => {
 
-        // initialise les donées du joueurs
-        if (!clients.data.joueurs[clients.currentSockId]) {
-            clients.data.joueurs[clients.currentSockId] = joueur;
-            clients.attentes.joueurs.push(clients.currentSockId);
-            callback({success: true, message: 'Votre pesudo est disponible.'});
+        joueur = verifieDonees(joueur);
+        if (joueur) {
+            // initialise les donées du joueurs
+            if (!servers.data.joueurs[socket.id]) {
+                servers.data.joueurs[socket.id] = joueur;
+                servers.attentes.joueurs.push(socket.id);
+            }
+            callback({success: true, joueur, message: 'Votre pseudo est disponible.'});
         } else {
-            callback({success: false, message: 'Votre pesudo n\'est plus disponible !'});
+            callback({success: false, joueur, message: 'Votre pseudo n\'est plus disponible !'});
         }
 
-        console.log('tous les joueurs:', clients.data.joueurs);
+       console.log('tous les joueurs:', servers.data.joueurs);
+    });
+
+    // validation la disponibilité du pseudo et couleur
+    socket.on('synchroniseJoueurMatchsPosition', (joueur) => {
+
+       // io.to(lastJoueurSocketId).emit('updateJoeurMatchsPosition', joueur);
+       // console.log('synchronisation le joueur:', joueur);
     });
 
     // mise à jour la list d'attente.
-    clients.attentes.intervalId = setInterval(updateListAttente, 1000);
+    servers.attentes.intervalId = setInterval(updateListAttente, 500);
 
     // mise à jour les doneées à la list d'attente
     function updateListAttente() {
 
         // gere les joueurs dans la liste d'attente.
-        if (clients.attentes.joueurs.length <= 1) {
+        if (servers.attentes.joueurs.length <= 1) {
             return;
         }
 
         // mettre les deux joueurs matchs dans une même liste.
-        for(let i=0;i<clients.attentes.joueurs.length;i++) {
+        for(let i=0;i<servers.attentes.joueurs.length;i++) {
             // recupere les deux premiere joueurs
-            const firstClientSocketId = clients.attentes.joueurs[i];
-            const nextClientSocketId = clients.attentes.joueurs.splice(i+1, 1).toString();
+            const firstClientSocketId = servers.attentes.joueurs[i];
+            const nextClientSocketId = servers.attentes.joueurs.splice(i+1, 1).toString();
 
             if (!nextClientSocketId) {
                 continue;
             }
 
             // clean list d'attente
-            clients.attentes.joueurs.remove(firstClientSocketId);
-            clients.attentes.joueurs.remove(nextClientSocketId);
+            servers.attentes.joueurs.remove(firstClientSocketId);
+            servers.attentes.joueurs.remove(nextClientSocketId);
 
             // match les deux joueurs dans la même liste
-            clients.attentes.matchs.push([firstClientSocketId, nextClientSocketId]);
+            servers.attentes.matchs.push([firstClientSocketId, nextClientSocketId]);
         }
 
         updateListJoeurMatchs();
@@ -75,26 +87,28 @@ io.sockets.on('connection', socket => {
     // mise à jour les doneées à la list joueur du matchs
     function updateListJoeurMatchs() {
 
-        for(let i=0;i<clients.attentes.matchs.length;i++) {
+        console.log('list matchs', servers.attentes.matchs);
+
+        for(let i=0;i<servers.attentes.matchs.length;i++) {
             let joeurUserData;
 
-            const firstJoueurSocketId =  clients.attentes.matchs[i].shift();
-            const lastJoueurSocketId =  clients.attentes.matchs[i].pop();
+            const firstJoueurSocketId =  servers.attentes.matchs[i].shift();
+            const lastJoueurSocketId =  servers.attentes.matchs[i].pop();
 
-            const firstJoeurUserData = clients.data.joueurs[lastJoueurSocketId];
+            const firstJoeurUserData = servers.data.joueurs[lastJoueurSocketId];
             if (!firstJoeurUserData) {
-                console.log('exception user data du match', lastJoueurSocketId);
+                // console.log('exception user data du match', lastJoueurSocketId);
                 continue;
             }
 
-            const lastJoeurUserData = clients.data.joueurs[firstJoueurSocketId];
+            const lastJoeurUserData = servers.data.joueurs[firstJoueurSocketId];
             if (!lastJoeurUserData) {
-                console.log('exception user data du match', firstJoueurSocketId);
+                // console.log('exception user data du match', firstJoueurSocketId);
                 continue;
             }
 
-            io.to(firstJoueurSocketId).emit('updateListAttente', firstJoeurUserData);
-            io.to(lastJoueurSocketId).emit('updateListAttente', lastJoeurUserData);
+            io.to(firstJoueurSocketId).emit('updateListAttente', [lastJoeurUserData, firstJoeurUserData]);
+            io.to(lastJoueurSocketId).emit('updateListAttente', [firstJoeurUserData, lastJoeurUserData]);
         }
     }
 
@@ -103,30 +117,53 @@ io.sockets.on('connection', socket => {
     {
         console.log("client déconnectée:" + socket.id);
 
-        delete clients.data.joueurs[socket.id];
-        clients.attentes.joueurs.remove(socket.id);
+        delete servers.data.joueurs[socket.id];
+        servers.attentes.joueurs.remove(socket.id);
 
         // update les joueurs dans la liste d'attente match.
-        updateListMatchs();
-    }
+        for(let i=0;i<servers.attentes.matchs.length;i++) {
+            for(let j=0;j<servers.attentes.matchs[i].length;j++) {
 
-    // update les joueurs dans la liste d'attente match.
-    function updateListMatchs()
-    {
-        for(let i=0;i<clients.attentes.matchs.length;i++) {
-            for(let j=0;j<clients.attentes.matchs[i].length;j++) {
-
-                if (clients.attentes.matchs[i][j] !== socket.id) {
+                if (servers.attentes.matchs[i][j] !== socket.id) {
                     continue;
                 }
 
-                clients.attentes.matchs[i].remove(socket.id);
-                clients.attentes.joueurs.push(clients.attentes.matchs[i].pop().toString());
+                servers.attentes.matchs[i].remove(socket.id);
+                servers.attentes.joueurs.push(servers.attentes.matchs[i].pop().toString());
             }
             return;
         }
     }
 
+    // vérifie les données doublés
+    function verifieDonees(joueur)
+    {
+        // initialise couleur du joueur
+        if (!joueur.couleur) {
+            joueur.couleur = getCouleur();
+        }
+
+        for(let idx in servers.data.joueurs) {
+            const joueurOnline = servers.data.joueurs[idx];
+
+            if (joueurOnline.couleur == joueur.couleur) {
+                joueur.couleur = getCouleur();
+                return verifieDonees(joueur);
+            }
+
+            if (joueurOnline.pseudo == joueur.pseudo) {
+                return false;
+            }
+        }
+        return joueur;
+    }
+
+    // recupere un couleur aléatoire
+    function getCouleur()
+    {
+        const random = Math.floor(Math.random() * servers.couleurs.length);
+        return servers.couleurs[random];
+    }
 });
 
 // remove un element sur un table par son valeur.
