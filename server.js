@@ -3,7 +3,7 @@
 const port = 8899;
 const servers = {
     couleurs : [
-        '#2e8833', '#00BCD4', '#E91E63', '#cb2222'
+        '#35af3d', '#a832c5', '#bfba1b', '#2d69b3'
     ],
     data: {
         currentSockId: null, // l'id du websocket dont le client connecté.
