@@ -71,6 +71,7 @@
                 tron.params.InputPesudo = $('#pseudo');
 
                 //alert
+                tron.params.AlertDanger = $('.alert-danger');
                 tron.params.AlertSuccess = $('.alert-success');
                 tron.params.AlertWarning = $('.alert-warning');
 
@@ -160,6 +161,11 @@
 
                e.preventDefault();
 
+               if (!tron.params.socket.connected) {
+                   tron.params.AlertDanger.text('Vous devez démarrer d\'abord le service websocket ！').removeClass('d-none');
+                   return false;
+               }
+
                tron.params.LocalPesudo = tron.params.InputPesudo.val();
 
                if (!tron.params.LocalPesudo) {
@@ -211,6 +217,7 @@
                }
 
                tron.params.AlertWarning.addClass('d-none');
+               tron.params.AlertDanger.addClass('d-none');
 
                 // layout
                tron.initializCouter();
