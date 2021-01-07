@@ -201,11 +201,6 @@
                return false;
             },
 
-            // initialise les layout différents dans le HTML
-            listAttenteStart: function() {
-
-            },
-
             // update la list d'attent
             listAttenteUpdate: function(joueur) {
 
@@ -215,7 +210,9 @@
                   return false;
                }
 
-               // layout
+               tron.params.AlertWarning.addClass('d-none');
+
+                // layout
                tron.initializCouter();
                tron.params.JoueurMatchs = joueur;
                tron.params.LayoutAttente.find('ul li:last-child').css('background-color', tron.params.JoueurMatchs[1].couleur).html('<span>'+tron.params.JoueurMatchs[1].pseudo+'</span> - Prêt').removeClass('d-none');;
