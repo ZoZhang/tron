@@ -18,24 +18,28 @@
                 <h1 class="logo"><img src="img/logo.png"></h1>
 
                 <form id="main-form">
-                    <div id="layout-pesudo" class="d-none">
-                        <div id="block-input-pesudo" class="form-group mt-5 d-none">
-                            <label for="pesudo" class="col-sm-2 col-form-label mb-2"><strong>Pesudo</strong></label>
-                            <input type="text" class="form-control" id="pesudo" placeholder="Entrez votre pesudo." autofocus/>
-                            <p id="input-alert" class="alert alert-warning mt-3 text-left d-none"></p>
+                    <div id="layout-pseudo">
+                        <div id="block-input-pseudo" class="form-group mt-5">
+                            <label for="pseudo" class="col-sm-2 col-form-label mb-2"><strong>Pesudo</strong></label>
+                            <input type="text" class="form-control" id="pseudo" placeholder="Entrez votre pseudo." autofocus/>
                             <small class="form-text text-muted text-center">Veuillez entrer votre pseudo, puis cliquez "Entrez" pour aller dans la list d'attente du jeu.</small>
+                            <p class="alert alert-warning mt-3 text-left d-none"></p>
                         </div>
-                        <div id="block-show-pesudo" class="d-none">
-                            <h3>Bonjour, <span></span> !</h3>
-                            <small class="form-text text-muted text-center">Entrez pour aller dans la list d'attente du jeu.</small>
-                        </div>
+<!--                        <div id="block-show-pseudo" class="d-none">-->
+<!--                            <h3>Bonjour, <span></span> !</h3>-->
+<!--                            <small class="form-text text-muted text-center">Entrez pour aller dans la list d'attente du jeu.</small>-->
+<!--                        </div>-->
                         <button type="submit" id="commencer" class="btn mt-3 btn-success">Entrez</button>
                     </div>
 
                     <div id="layout-jeu" class="d-none">
                         <div id="layout-attente" class="d-none">
-                            <h2>List d'attente</h2>
-                            <small class="form-text text-muted text-center">Attendez que d'autres joueurs entrent, puis le jeu commencera automatiquement.</small>
+                            <div class="header">
+                                <h2>List d'attente</h2>
+                                <small class="form-text text-muted text-center">Attendez que d'autres joueurs entrent, puis le jeu commencera automatiquement.</small>
+                            </div>
+                            <p class="alert alert-warning mt-3 text-left d-none"></p>
+                            <p class="alert alert-success mt-3 text-left d-none"></p>
                             <div class="list-attente form-group w-80 m-auto">
                                 <ul class="mt-3">
                                     <li><span></span> - Prêt</li>
@@ -48,14 +52,15 @@
                             <div class="plateau-infor">
                                 <div class="row">
                                     <div class="joeur1 col text-left">
-                                        <p><span></span> : <span></span></p>
+                                        <p><span></span></p>
                                     </div>
                                     <div class="joeur2 col text-right">
-                                        <p><span></span> : <span></span></p>
+                                        <p><span></span></p>
                                     </div>
                                 </div>
                             </div>
                             <div class="plateau">
+                                <canvas id="main-canvas" width="540" height="400"></canvas>
                             </div>
                         </div>
                       <button type="submit" id="quitte" class="btn mt-3 btn-danger">Quitter</button>

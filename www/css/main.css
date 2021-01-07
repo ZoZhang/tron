@@ -23,14 +23,28 @@ ul, li {
     background-color: #ec8817;
 }
 
-.plateau {
+.plateau canvas {
+    width:100%;
     position: relative;
     margin: 10px auto;
-    border: 2px solid #5fccc1;
+    border: 2px solid #50a79e;
 }
 
 .plateau-infor p {
-    margin:0;
+    margin: 0;
+}
+
+.plateau-infor p span {
+    font-size: 1.5rem;
+    text-transform: uppercase;
+}
+
+.plateau-infor p span:first-child {
+    padding-left: 5px;
+}
+
+.plateau-infor p span:last-child {
+    padding-right: 5px;
 }
 
 @media screen and (min-width: 200px) and (max-width: 640px) {
