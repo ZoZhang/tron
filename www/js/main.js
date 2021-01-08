@@ -27,14 +27,7 @@
        tron = {
 
             // paramètres globaux du jeu
-            params: {
-                couleurs : [
-                    { label: 'green', value: '#2E7D32' },
-                    { label: 'greenblue', value: '#00BCD4' },
-                    { label: 'pink', value: '#E91E63' },
-                    { label: 'purple', value: '#B71C1C' },
-                ]
-            },
+            params: {},
 
             // initialise les paramètres du HTML et les valeus par défaut et les events.
             initialized: function() {
@@ -49,8 +42,6 @@
 
                 tron.initializWebSocket();
 
-                // debugs
-                //tron.startJeux();
             },
 
             // initialise les variables d'element du HTML
@@ -132,6 +123,7 @@
                 // button
                 // tron.params.ButtonStart.click(tron.start);
                 tron.params.ButtonStop.click(tron.stopJeux);
+
             },
 
             // initialise connexion websocket
@@ -150,8 +142,14 @@
                 });
 
                 // mise a jour les positions du jouer de distance.
-                tron.params.socket.on('updateJoeurMatchsPosition', (res) => {
-                    console.log(res);
+                tron.params.socket.on('updateJoeurMatchsPosition', (joueur) => {
+                    console.log(joueur);
+
+                    if (joueur) {
+                        tron.params.JoueurMatchs[1].position = joueur.position;
+                        console.log(tron.params.JoueurMatchs);
+                    }
+                    return false;
                 });
                 
             },
@@ -162,7 +160,7 @@
                e.preventDefault();
 
                if (!tron.params.socket.connected) {
-                   tron.params.AlertDanger.text('Vous devez démarrer d\'abord le service websocket ！').removeClass('d-none');
+                   tron.params.AlertDanger.text('Le service websocket est indisponible !').removeClass('d-none');
                    return false;
                }
 
@@ -173,7 +171,7 @@
                  return false;
                }
 
-               tron.params.userData = {
+               tron.params.joueurData = {
                    pseudo: tron.params.LocalPesudo,
                    direction: null,
                    position: [
@@ -184,8 +182,9 @@
                    ]
                };
 
-               tron.params.socket.emit('initialiseData', tron.params.userData, function(res) {
+               tron.params.socket.emit('initialiseData', tron.params.joueurData, function(res) {
                    if (res.success) {
+                        tron.params.AlertSuccess.addClass('d-none');
                         tron.params.AlertWarning.addClass('d-none');
                         tron.params.LocalStorage.setItem('pseudo', res.joueur.pseudo);
                         tron.params.LocalStorage.setItem('couleur', res.joueur.couleur);
@@ -240,8 +239,8 @@
                }, 1000)
             },
 
-            // initialise le plateu du jeux
-            startJeux: function() {
+           // initialise le plateu du jeux
+           startJeux: function() {
 
                // debug donées
                // tron.params.JoueurMatchs = [
@@ -275,7 +274,7 @@
                    return false;
                }
 
-               console.log(tron.params.JoueurMatchs);
+               console.log('List matchs deux joueurs: ', tron.params.JoueurMatchs);
 
                // update joueur pseudo
                for(let i=0;i<tron.params.JoueurMatchs.length;i++) {
@@ -283,6 +282,7 @@
                }
 
                //mise a jour la position du jouer distance par defaut.
+               tron.params.JoueurMatchs[1].position[0].x = 20;
                tron.params.JoueurMatchs[1].position[0].y = 0;
 
                // initialise canvas
@@ -299,10 +299,11 @@
 
                tron.initializValues();
                tron.initializCouter();
+               tron.initialiseCanvas();
 
                tron.params.LayoutPesudo.removeClass('d-none');
                tron.params.LayoutJeu.addClass('d-none');
-               tron.params.LayoutAttente.addClass('d-none');
+               tron.params.LayoutAttente.find('ul li:last-child').css('background-color', '').html("Attente de l'entrée d'autres joueurs <span>0</span> second..").end().addClass('d-none');
                tron.params.LayoutPlateau.addClass('d-none');
 
                tron.params.socket.emit('deconnexion', function(res){
@@ -327,13 +328,13 @@
                 //Dessin éléments de grille sur l'écran
                 tron.params.MainCtx.strokeStyle = "#eee";
                 tron.params.MainCtx.stroke();
-                tron.params.MainCanvas.gameLoop = setInterval(tron.draw, 200); //--Vitesse de "tron"
+                tron.params.MainCanvas.gameLoop = setInterval(tron.draw, 1000); //--Vitesse de "tron"
 
-                //Gestion des direction avec les boutons du clavier
+                // keyboard
                 $(document).keydown(function(e) {
-                   var key = e.which;
-                   if(key == "37" && tron.params.MainCanvas.direction!= "right") tron.params.JoueurMatchs[0].direction = "left";
-                   else if(key == "39" && tron.params.MainCanvas.direction!= "left") tron.params.JoueurMatchs[0].direction = "right";
+                    var key = e.which;
+                    if(key == "37" ) tron.params.JoueurMatchs[0].direction = "left";
+                    else if(key == "39") tron.params.JoueurMatchs[0].direction = "right";
                });
             },
 
@@ -342,25 +343,26 @@
                 var headTron; //le cellule qui contient les coordonnées du futur tete(moto) du tron
 
                 // création les motos du tron avec les données des jouers.
-                for(let i = 0;i<tron.params.JoueurMatchs.length;i++) {
+                for(let i = 0;i < tron.params.JoueurMatchs.length;i++) {
 
-                    for(let j = 0; j < tron.params.JoueurMatchs[i].position.length; j++) {
+                    // cacule le premirer position du jouer.
+                    for(let j = 0;j < tron.params.JoueurMatchs[0].position.length; j++) {
 
                         //l'obtention de la position actuelle de la tete(moto) du tron
-                        var nx = tron.params.JoueurMatchs[i].position[j].x,
-                            ny = tron.params.JoueurMatchs[i].position[j].y;
+                        var nx = tron.params.JoueurMatchs[0].position[j].x,
+                            ny = tron.params.JoueurMatchs[0].position[j].y;
 
                         //on change la direction du tron en fonction de la valeur de la variable de "direction"(left|right|up|down)
-                        switch(tron.params.JoueurMatchs[i].direction) {
+                        switch(tron.params.JoueurMatchs[0].direction) {
                             case 'left':
                                   nx--;
                                   ny++;
-                                  tron.params.JoueurMatchs[i].direction = '';
+                                  tron.params.JoueurMatchs[0].direction = '';
                                 break;
                             case 'right':
                                   nx++;
                                   ny++;
-                                  tron.params.JoueurMatchs[i].direction = '';
+                                  tron.params.JoueurMatchs[0].direction = '';
                                 break;
                         }
 
@@ -382,7 +384,7 @@
                             headTron.y = ny;
 
                             //Ajoute de cellule "headTron" au début de la tableaux joueur matchs
-                            tron.params.JoueurMatchs[i].position.unshift(headTron);
+                            tron.params.JoueurMatchs[0].position.unshift(headTron);
                         }
 
                         // nettoye les anciennes cellules dans les cellules actuelles du jouer actuelle
@@ -392,22 +394,22 @@
                     }
 
                     if (i == 0 ) {
-                        tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[i]);
+                        tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[0]);
                     }
 
-                    //dessin de trajectoire de tron
-                    for(let k = 0; k < tron.params.JoueurMatchs[i].position.length; k++){
-                        let cell = tron.params.JoueurMatchs[i].position[k];
-                        tron.params.MainCtx.fillStyle = tron.params.JoueurMatchs[i].couleur; //-- couleur de tron
-                        tron.params.MainCtx.fillRect(cell.x*tron.params.MainCanvas.cw, cell.y*tron.params.MainCanvas.cw, tron.params.MainCanvas.cw, tron.params.MainCanvas.cw);
-                    }
+                    tron.drawCells();
                 }
-
-                //la direction du tron
-                //tron.params.MainCanvas.direction = 'down';
-
-                //console.log(tron.params.MainCanvas.width);
             },
+
+           //function pour trajectoire du tron
+            drawCells: function (){
+                //dessin de trajectoire de tron
+                for(let k = 0; k < tron.params.JoueurMatchs[i].position.length; k++){
+                    let cell = tron.params.JoueurMatchs[i].position[k];
+                    tron.params.MainCtx.fillStyle = tron.params.JoueurMatchs[i].couleur; //-- couleur de tron
+                    tron.params.MainCtx.fillRect(cell.x*tron.params.MainCanvas.cw, cell.y*tron.params.MainCanvas.cw, tron.params.MainCanvas.cw, tron.params.MainCanvas.cw);
+                }
+            }
 
             //vérification les zones de collision
             checkCollision: function(x,y,array){

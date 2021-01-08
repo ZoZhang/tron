@@ -34,9 +34,11 @@ io.sockets.on('connection', socket => {
         if (joueur) {
             // initialise les donées du joueurs
             if (!servers.data.joueurs[socket.id]) {
+                joueur.socketId = socket.id;
                 servers.data.joueurs[socket.id] = joueur;
                 servers.attentes.joueurs.push(socket.id);
             }
+
             callback({success: true, joueur, message: 'Votre pseudo est disponible.'});
         } else {
             callback({success: false, joueur, message: 'Votre pseudo n\'est plus disponible !'});
@@ -48,8 +50,28 @@ io.sockets.on('connection', socket => {
     // validation la disponibilité du pseudo et couleur
     socket.on('synchroniseJoueurMatchsPosition', (joueur) => {
 
-       // io.to(lastJoueurSocketId).emit('updateJoeurMatchsPosition', joueur);
-       // console.log('synchronisation le joueur:', joueur);
+        if (servers.attentes.matchs.length <= 0) {
+            return false;
+        }
+
+        let MatchJoueurScoketId;
+
+        // cacule l'id socket du jouer sous la list matchs
+        for(let i=0;i<servers.attentes.matchs.length;i++) {
+
+            const CurrentMatchsListJouers = servers.attentes.matchs[i];
+            const indexCurrentJoueurMatch = CurrentMatchsListJouers.indexOf(joueur.socketId);
+
+            if(indexCurrentJoueurMatch != -1) {
+                MatchJoueurScoketId = indexCurrentJoueurMatch <= 0 ? CurrentMatchsListJouers[1] : CurrentMatchsListJouers[0];
+                break;
+            }
+        }
+
+        if (MatchJoueurScoketId) {
+            console.log('synchronisation le joueur:', joueur);
+            io.to(MatchJoueurScoketId).emit('updateJoeurMatchsPosition', joueur);
+        }
     });
 
     // mise à jour la list d'attente.
@@ -92,8 +114,8 @@ io.sockets.on('connection', socket => {
         for(let i=0;i<servers.attentes.matchs.length;i++) {
             let joeurUserData;
 
-            const firstJoueurSocketId =  servers.attentes.matchs[i].shift();
-            const lastJoueurSocketId =  servers.attentes.matchs[i].pop();
+            const firstJoueurSocketId =  servers.attentes.matchs[i][0];
+            const lastJoueurSocketId =  servers.attentes.matchs[i][1];
 
             const firstJoeurUserData = servers.data.joueurs[lastJoueurSocketId];
             if (!firstJoeurUserData) {
@@ -138,23 +160,29 @@ io.sockets.on('connection', socket => {
     // vérifie les données doublés
     function verifieDonees(joueur)
     {
-        // initialise couleur du joueur
-        if (!joueur.couleur) {
-            joueur.couleur = getCouleur();
-        }
-
-        for(let idx in servers.data.joueurs) {
-            const joueurOnline = servers.data.joueurs[idx];
-
-            if (joueurOnline.couleur == joueur.couleur) {
+        try {
+            // initialise couleur du joueur
+            if (!joueur.couleur) {
                 joueur.couleur = getCouleur();
-                return verifieDonees(joueur);
             }
 
-            if (joueurOnline.pseudo == joueur.pseudo) {
-                return false;
+            for(let idx in servers.data.joueurs) {
+                const joueurOnline = servers.data.joueurs[idx];
+
+                if (joueurOnline.couleur == joueur.couleur) {
+                    joueur.couleur = getCouleur();
+                    return verifieDonees(joueur);
+                }
+
+                if (joueurOnline.pseudo.toUpperCase() == joueur.pseudo.toUpperCase()) {
+                    return false;
+                }
             }
+        } catch(e) {
+            console.log('Exception validation data', joueur);
+            return false;
         }
+
         return joueur;
     }
 
