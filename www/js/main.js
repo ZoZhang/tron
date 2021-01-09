@@ -27,7 +27,10 @@
        tron = {
 
             // paramètres globaux du jeu
-            params: {},
+            params: {
+                debug: false,
+                blockMort: true
+            },
 
             // initialise les paramètres du HTML et les valeus par défaut et les events.
             initialized: function() {
@@ -43,7 +46,9 @@
                 tron.initializWebSocket();
 
                 // debug
-                tron.startJeux();
+                if (tron.params.debug) {
+                    tron.startJeux();
+                }
             },
 
             // initialise les variables d'element du HTML
@@ -144,16 +149,24 @@
                     tron.listAttenteUpdate(res);
                 });
 
-                // mise a jour les positions du jouer de distance.
+                // mise a jour les positions du jouer de match.
                 tron.params.socket.on('updateJoeurMatchsPosition', (joueur) => {
 
-                    if (joueur) {
-                        tron.drawCellsTurn(joueur.position, joueur.couleur);
-                        console.log('update pos.');
+                    if (!joueur) {
+                        return false;
                     }
-                    return false;
+
+                    // création les blocks morts miroir au jouer match(distance)
+                    tron.initialseBlockMort(true);
+
+                    // validation le jouer distance.
+                    if(tron.checkCollision(joueur.position[0].x, joueur.position[0].y, joueur.position)) {
+                        console.log('non validation..');
+                    }
+
+                    // création les positions miroir au jouer match(distance)
+                    tron.drawCellsTurn(joueur.couleur, joueur.position);
                 });
-                
             },
 
             // validate la disponibilité du pseudo
@@ -245,31 +258,33 @@
             startJeux: function() {
 
                 // debug donées
-                tron.params.JoueurMatchs = [
-                    {
-                        pseudo: 'test1',
-                        couleur: '#B71C1C',
-                        direction: '',
-                        position: [
-                            {
-                                x: 27,
-                                y: 40
-                            }
-                        ]
-                    },
+                if (tron.params.debug) {
+                    tron.params.JoueurMatchs = [
+                        {
+                            pseudo: 'test1',
+                            couleur: '#B71C1C',
+                            direction: '',
+                            position: [
+                                {
+                                    x: 27,
+                                    y: 40
+                                }
+                            ]
+                        },
 
-                    {
-                        pseudo: 'test2',
-                        couleur: '#2E7D32',
-                        direction: '',
-                        position: [
-                            {
-                                x: 27,
-                                y: 0
-                            }
-                        ]
-                    }
-                ];
+                        {
+                            pseudo: 'test2',
+                            couleur: '#2E7D32',
+                            direction: '',
+                            position: [
+                                {
+                                    x: 27,
+                                    y: 0
+                                }
+                            ]
+                        }
+                    ];
+                }
 
                if (!tron.params.JoueurMatchs || !Array.isArray(tron.params.JoueurMatchs)) {
                    tron.params.AlertWarning.text('Il y a un erreur du serveur, veuillez recommencer le jeux!').removeClass('d-none');
@@ -296,8 +311,8 @@
                tron.params.LayoutPlateau.removeClass('d-none');
            },
 
-           // initialise les layouts par défauts et les valeurs par défauts
-           stopJeux: function() {
+            // initialise les layouts par défauts et les valeurs par défauts
+            stopJeux: function() {
 
                // tron.initializValues();
                // tron.initializCouter();
@@ -314,6 +329,7 @@
                    console.log(res);
                });
 
+               console.log('le jeux termine.');
                return false;
            },
 
@@ -328,7 +344,7 @@
                 tron.params.MainCtx.strokeStyle = "#eee";
                 tron.params.MainCtx.stroke();
 
-                //initialisation les positions mapping
+                //initialisation les positions miroir
                 tron.params.MainCanvas.PosMapping = {
                    x: [],
                    y: []
@@ -337,15 +353,33 @@
                 //initialisation les obstacles dans le plateu
                 tron.params.MainCanvas.PosBlockMort = [
                     {
-                        couleur: '#fff',
+                        couleur: '#ffffff',
                         position: [
-                            {x: 27, y: 15},
-                            {x: 27, y: 25},
+                            // left
+                            {x: 13, y: 35},
+                            {x: 15, y: 29},
+                            {x: 19, y: 34},
+                            {x: 21, y: 37},
+                            {x: 22, y: 28},
+                            {x: 23, y: 34},
+
+                            // middle
+                            {x: 25, y: 25},
+                            {x: 27, y: 32},
+                            {x: 28, y: 28},
+
+                            // right
+                            {x: 29, y: 37},
+                            {x: 31, y: 35},
+                            {x: 31, y: 31},
+                            {x: 34, y: 38},
+                            {x: 36, y: 33}
                             ]
                     }
                 ];
-                tron.createBlockMort();
+                tron.initialseBlockMort();
 
+                // géneration les positions miroir.
                 for(let i=0,j = tron.params.MainCanvas.width / tron.params.MainCanvas.cw; j >= 0; i++, j--) {
                     tron.params.MainCanvas.PosMapping.x[i] = j;
                 }
@@ -354,6 +388,7 @@
                     tron.params.MainCanvas.PosMapping.y[i] = j;
                 }
 
+                // démarrage un interval du tron.
                 tron.params.PositionInterval = setInterval(tron.createPosition, 400); //--Vitesse de "tron"
 
                 // keyboard
@@ -365,9 +400,18 @@
             },
 
             // crée les obstacles dans le plateu
-            createBlockMort: function() {
+           initialseBlockMort: function(revere) {
+
+                if (!tron.params.blockMort) {
+                    return false;
+                }
+
                 for(let i=0; i<tron.params.MainCanvas.PosBlockMort.length; i++) {
-                    tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
+                    if (revere) {
+                        tron.drawCellsTurn(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
+                    } else {
+                        tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
+                    }
                 }
             },
 
@@ -423,13 +467,8 @@
                     }
                 }
 
-                // if (i == 0 ) {
-                    tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[0]);
-                // }
+                tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[0]);
 
-               // console.log(tron.params.JoueurMatchs[0].position);
-
-                // tron.stopJeux();
                 // création les trajectoires du tron
                 tron.drawCells(tron.params.JoueurMatchs[0].couleur, tron.params.JoueurMatchs[0].position);
             },
@@ -447,26 +486,49 @@
             //création les trajectoires miroir du tron
             drawCellsTurn: function(couleur, position) {
 
+               let tmp = [];
                for(let i = 0; i< position.length; i++) {
-                   position[i].x = tron.params.MainCanvas.PosMapping.x[position[i].x];
-                   position[i].y = tron.params.MainCanvas.PosMapping.y[position[i].y];
+                   tmp[i] = {};
+                   tmp[i].x = tron.params.MainCanvas.PosMapping.x[position[i].x];
+                   tmp[i].y = tron.params.MainCanvas.PosMapping.y[position[i].y];
                 }
 
-               tron.drawCells(couleur, position);
+               tron.drawCells(couleur, tmp);
             },
 
             //vérification les zones de collision
-            checkCollision: function(x,y,array){
+            checkCollision: function(x, y, position) {
 
                 if (x == -1 || y == -1) {
-                    return false;
+                    return true;
                 }
 
-                 // nx == -1 || ny == -1 nx == tron.params.MainCanvas.width / tron.params.MainCanvas.cw || ny == -1 || ny == tron.params.MainCanvas.height / tron.params.MainCanvas.cw ||
+                // validation les positions block morts.
+                if (tron.params.blockMort) {
+                    for(let i=0;i<tron.params.MainCanvas.PosBlockMort[0].position.length;i++) {
+                        const blockMorts = tron.params.MainCanvas.PosBlockMort[0].position[i];
+                        if ((x == blockMorts.x && y == blockMorts.y)) {
+                            return true;
+                        }
+                    }
+                }
 
-                for(var i = 0; i<array.length; i++){
-                //   if(array[i].x == x && array[i].y == y) return true;
-               }
+               return false;
+            },
+
+            //vérification les collisions entre le joueur actuelle et le joueur match(distance)
+            checkCollisionJoueurs: function(jouer1, jouer2) {
+
+                console.log('validte joueurs.');
+                return true;
+
+                // validation les positions block morts.
+                for(let i=0;i<tron.params.MainCanvas.PosBlockMort[0].position.length;i++) {
+                    const blockMorts = tron.params.MainCanvas.PosBlockMort[0].position[i];
+                    if ((x == blockMorts.x && y == blockMorts.y)) {
+                        return true;
+                    }
+                }
                return false;
             }
        };
