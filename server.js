@@ -69,7 +69,6 @@ io.sockets.on('connection', socket => {
         }
 
         if (MatchJoueurScoketId) {
-            console.log('synchronisation le joueur:', joueur);
             io.to(MatchJoueurScoketId).emit('updateJoeurMatchsPosition', joueur);
         }
     });
