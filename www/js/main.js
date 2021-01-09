@@ -86,6 +86,9 @@
                 // interval position
                 tron.params.PositionInterval = null;
 
+                // reverse block mort distance
+                tron.params.ReverseBlockMortAdded = false;
+
                 if(!tron.params.MainCanvas.getContext) {
                     tron.params.AlertWarning.text('Votre navigateur ne prend pas en charge le canevas !').removeClass('d-none');
                     return false;
@@ -157,15 +160,20 @@
                     }
 
                     // création les blocks morts miroir au jouer match(distance)
-                    tron.initialseBlockMort(true);
-
-                    // validation le jouer distance.
-                    if(tron.checkCollision(joueur.position[0].x, joueur.position[0].y, joueur.position)) {
-                        console.log('non validation..');
+                    if (!tron.params.ReverseBlockMortAdded) {
+                        tron.initialseBlockMort(true);
+                        tron.params.ReverseBlockMortAdded = true;
                     }
 
+                    // validation le jouer distance. TODO
+                    // if(tron.checkCollision(joueur.position[0].x, joueur.position[0].y, joueur.position)) {
+                    //     console.log('non validation..');
+                    // }
+
                     // création les positions miroir au jouer match(distance)
-                    tron.drawCellsTurn(joueur.couleur, joueur.position);
+                    const reversePos = tron.reversePositions(joueur.position);
+                    tron.drawCells(joueur.couleur, reversePos);
+
                 });
             },
 
@@ -408,7 +416,9 @@
 
                 for(let i=0; i<tron.params.MainCanvas.PosBlockMort.length; i++) {
                     if (revere) {
-                        tron.drawCellsTurn(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
+                        const reversePos = tron.reversePositions(tron.params.MainCanvas.PosBlockMort[i].position);
+                        tron.params.MainCanvas.PosBlockMort[i].position = tron.params.MainCanvas.PosBlockMort[i].position.concat(reversePos);
+                        tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, reversePos);
                     } else {
                         tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
                     }
@@ -484,16 +494,16 @@
             },
 
             //création les trajectoires miroir du tron
-            drawCellsTurn: function(couleur, position) {
+            reversePositions: function(position) {
 
-               let tmp = [];
+               let reversePos = [];
                for(let i = 0; i< position.length; i++) {
-                   tmp[i] = {};
-                   tmp[i].x = tron.params.MainCanvas.PosMapping.x[position[i].x];
-                   tmp[i].y = tron.params.MainCanvas.PosMapping.y[position[i].y];
+                   reversePos[i] = {};
+                   reversePos[i].x = tron.params.MainCanvas.PosMapping.x[position[i].x];
+                   reversePos[i].y = tron.params.MainCanvas.PosMapping.y[position[i].y];
                 }
 
-               tron.drawCells(couleur, tmp);
+               return reversePos;
             },
 
             //vérification les zones de collision
