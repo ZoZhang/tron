@@ -89,6 +89,18 @@
                 // reverse block mort distance
                 tron.params.ReverseBlockMortAdded = false;
 
+                //initialisation les positions miroir
+                tron.params.MainCanvas.PosMapping = {
+                    x: [],
+                    y: []
+                };
+
+                //initialisation les obstacles dans le plateu
+                tron.params.MainCanvas.PosBlockMort = {
+                        couleur: '#ffffff',
+                        position: []
+                    };
+
                 if(!tron.params.MainCanvas.getContext) {
                     tron.params.AlertWarning.text('Votre navigateur ne prend pas en charge le canevas !').removeClass('d-none');
                     return false;
@@ -165,15 +177,20 @@
                         tron.params.ReverseBlockMortAdded = true;
                     }
 
-                    // validation le jouer distance. TODO
-                    // if(tron.checkCollision(joueur.position[0].x, joueur.position[0].y, joueur.position)) {
-                    //     console.log('non validation..');
-                    // }
-
-                    // création les positions miroir au jouer match(distance)
+                    // création les positions miroir au jouer match(distance) && ajoute les positions block morts.
                     const reversePos = tron.reversePositions(joueur.position);
+                    for(let i=0;i<reversePos.length;i++) {
+                        tron.params.MainCanvas.PosBlockMort.position.push(reversePos[i]);
+                    }
                     tron.drawCells(joueur.couleur, reversePos);
 
+                    // validation le jouer distance. TODO
+                    if(tron.checkCollision(joueur.position[0].x, joueur.position[0].y)) {
+                        console.log('collision check', joueur.position);
+                        console.log(tron.params.MainCanvas.PosBlockMort.position);
+                        tron.stopJeux();
+                        return ;
+                    }
                 });
             },
 
@@ -341,8 +358,8 @@
                return false;
            },
 
-           // initialise le canvas
-           initialiseCanvas: function() {
+            // initialise le canvas
+            initialiseCanvas: function() {
 
                 // le size de cellule "tron"
                 tron.params.MainCanvas.cw = 10;
@@ -352,39 +369,7 @@
                 tron.params.MainCtx.strokeStyle = "#eee";
                 tron.params.MainCtx.stroke();
 
-                //initialisation les positions miroir
-                tron.params.MainCanvas.PosMapping = {
-                   x: [],
-                   y: []
-                };
-
                 //initialisation les obstacles dans le plateu
-                tron.params.MainCanvas.PosBlockMort = [
-                    {
-                        couleur: '#ffffff',
-                        position: [
-                            // left
-                            {x: 13, y: 35},
-                            {x: 15, y: 29},
-                            {x: 19, y: 34},
-                            {x: 21, y: 37},
-                            {x: 22, y: 28},
-                            {x: 23, y: 34},
-
-                            // middle
-                            {x: 25, y: 25},
-                            {x: 27, y: 32},
-                            {x: 28, y: 28},
-
-                            // right
-                            {x: 29, y: 37},
-                            {x: 31, y: 35},
-                            {x: 31, y: 31},
-                            {x: 34, y: 38},
-                            {x: 36, y: 33}
-                            ]
-                    }
-                ];
                 tron.initialseBlockMort();
 
                 // géneration les positions miroir.
@@ -410,19 +395,43 @@
             // crée les obstacles dans le plateu
            initialseBlockMort: function(revere) {
 
-                if (!tron.params.blockMort) {
-                    return false;
-                }
+                // initialise les positions block morts
+                if (tron.params.blockMort && tron.params.MainCanvas.PosBlockMort.position.length == 0) {
+                    tron.params.MainCanvas.PosBlockMort.position = [
+                        // left
+                        {x: 13, y: 35},
+                        {x: 15, y: 29},
+                        {x: 19, y: 34},
+                        {x: 21, y: 37},
+                        {x: 22, y: 28},
+                        {x: 23, y: 34},
 
-                for(let i=0; i<tron.params.MainCanvas.PosBlockMort.length; i++) {
-                    if (revere) {
-                        const reversePos = tron.reversePositions(tron.params.MainCanvas.PosBlockMort[i].position);
-                        tron.params.MainCanvas.PosBlockMort[i].position = tron.params.MainCanvas.PosBlockMort[i].position.concat(reversePos);
-                        tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, reversePos);
-                    } else {
-                        tron.drawCells(tron.params.MainCanvas.PosBlockMort[i].couleur, tron.params.MainCanvas.PosBlockMort[i].position);
+                        // middle
+                        {x: 25, y: 25},
+                        {x: 27, y: 32},
+                        {x: 28, y: 28},
+
+                        // right
+                        {x: 29, y: 37},
+                        {x: 31, y: 35},
+                        {x: 31, y: 31},
+                        {x: 34, y: 38},
+                        {x: 36, y: 33}
+                    ];
+
+                    for(let i=0;i<tron.params.MainCanvas.PosBlockMort.position.length;i++) {
+                        tron.drawCells(tron.params.MainCanvas.PosBlockMort.couleur, tron.params.MainCanvas.PosBlockMort.position);
                     }
                 }
+
+               // création les positions block morts mirroirs.
+               if (revere) {
+                   const reversePos = tron.reversePositions(tron.params.MainCanvas.PosBlockMort.position);
+                   for(let i=0;i<reversePos.length;i++) {
+                       tron.params.MainCanvas.PosBlockMort.position.push(reversePos[i]);
+                       tron.drawCells(tron.params.MainCanvas.PosBlockMort.couleur, reversePos);
+                   }
+               }
             },
 
             // Le algorithme position du jeux
@@ -458,7 +467,7 @@
                     }
 
                     //vérifions la collision du Tron avec lui-même ou avec les taille de la grille de canvas
-                    if (tron.checkCollision(nx, ny, tron.params.JoueurMatchs[0].position)) {
+                    if (tron.checkCollision(nx, ny)) {
                         tron.stopJeux();
                         return;
                     } else {
@@ -477,6 +486,7 @@
                     }
                 }
 
+                // synchronisation les positions du joueur matchs
                 tron.params.socket.emit('synchroniseJoueurMatchsPosition', tron.params.JoueurMatchs[0]);
 
                 // création les trajectoires du tron
@@ -507,38 +517,21 @@
             },
 
             //vérification les zones de collision
-            checkCollision: function(x, y, position) {
+            checkCollision: function(x, y) {
 
                 if (x == -1 || y == -1) {
                     return true;
                 }
 
                 // validation les positions block morts.
-                if (tron.params.blockMort) {
-                    for(let i=0;i<tron.params.MainCanvas.PosBlockMort[0].position.length;i++) {
-                        const blockMorts = tron.params.MainCanvas.PosBlockMort[0].position[i];
-                        if ((x == blockMorts.x && y == blockMorts.y)) {
-                            return true;
-                        }
-                    }
-                }
-
-               return false;
-            },
-
-            //vérification les collisions entre le joueur actuelle et le joueur match(distance)
-            checkCollisionJoueurs: function(jouer1, jouer2) {
-
-                console.log('validte joueurs.');
-                return true;
-
-                // validation les positions block morts.
-                for(let i=0;i<tron.params.MainCanvas.PosBlockMort[0].position.length;i++) {
-                    const blockMorts = tron.params.MainCanvas.PosBlockMort[0].position[i];
+                for(let i=0;i<tron.params.MainCanvas.PosBlockMort.position.length;i++) {
+                    const blockMorts = tron.params.MainCanvas.PosBlockMort.position[i];
                     if ((x == blockMorts.x && y == blockMorts.y)) {
+                        console.log('check position', tron.params.MainCanvas.PosBlockMort);
                         return true;
                     }
                 }
+
                return false;
             }
        };
