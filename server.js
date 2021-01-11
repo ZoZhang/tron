@@ -25,7 +25,9 @@ io.sockets.on('connection', socket => {
 
     // effacer les données au joueur quitté
     socket.on('disconnect', cleanJoueursQuitte);
-    socket.on('deconnexion', cleanJoueursQuitte);
+    socket.on('deconnexion', (data) => {
+        cleanJoueursQuitte(data);
+    });
 
     // validation la disponibilité du pseudo et couleur
     socket.on('initialiseData', (joueur, callback) => {
@@ -54,22 +56,12 @@ io.sockets.on('connection', socket => {
             return false;
         }
 
-        let MatchJoueurScoketId;
-
-        // cacule l'id socket du jouer sous la list matchs
-        for(let i=0;i<servers.attentes.matchs.length;i++) {
-
-            const CurrentMatchsListJouers = servers.attentes.matchs[i];
-            const indexCurrentJoueurMatch = CurrentMatchsListJouers.indexOf(joueur.socketId);
-
-            if(indexCurrentJoueurMatch != -1) {
-                MatchJoueurScoketId = indexCurrentJoueurMatch <= 0 ? CurrentMatchsListJouers[1] : CurrentMatchsListJouers[0];
-                break;
-            }
-        }
+        const MatchJoueurScoketId = getJouerMatchSocketId(joueur.socketId);
 
         if (MatchJoueurScoketId) {
             io.to(MatchJoueurScoketId).emit('updateJoeurMatchsPosition', joueur);
+        } else {
+            console.log('sychronisation positions échoue..');
         }
     });
 
@@ -134,18 +126,31 @@ io.sockets.on('connection', socket => {
     }
 
     // nettoye list du joueurs quittés
-    function cleanJoueursQuitte()
+    function cleanJoueursQuitte(data)
     {
-        console.log("client déconnectée:" + socket.id);
+        console.log("client déconnectée:" + socket.id, data);
 
+        // nettoye les donées du joueurs.
         delete servers.data.joueurs[socket.id];
         servers.attentes.joueurs.remove(socket.id);
+
+        // synchronisation la notification.
+        if (data.notification) {
+            const MatchJoueurScoketId = getJouerMatchSocketId(socket.id);
+
+            if (MatchJoueurScoketId) {
+                io.to(MatchJoueurScoketId).emit('showResult', data);
+            } else {
+                console.log('sychronisation notification échoue..');
+            }
+        }
 
         // update les joueurs dans la liste d'attente match.
         for(let i=0;i<servers.attentes.matchs.length;i++) {
             for(let j=0;j<servers.attentes.matchs[i].length;j++) {
 
-                if (servers.attentes.matchs[i][j] !== socket.id) {
+                let joueurMatchSocketId = servers.attentes.matchs[i][j];
+                if (joueurMatchSocketId !== socket.id) {
                     continue;
                 }
 
@@ -154,6 +159,26 @@ io.sockets.on('connection', socket => {
             }
             return;
         }
+    }
+
+    // recupere l'id du joueur match
+    function getJouerMatchSocketId(currSocketId)
+    {
+        let MatchJoueurScoketId;
+
+        // cacule l'id socket du jouer sous la list matchs
+        for(let i=0;i<servers.attentes.matchs.length;i++) {
+
+            const CurrentMatchsListJouers = servers.attentes.matchs[i];
+            const indexCurrentJoueurMatch = CurrentMatchsListJouers.indexOf(currSocketId);
+
+            if(indexCurrentJoueurMatch != -1) {
+                MatchJoueurScoketId = indexCurrentJoueurMatch <= 0 ? CurrentMatchsListJouers[1] : CurrentMatchsListJouers[0];
+                break;
+            }
+        }
+
+        return MatchJoueurScoketId;
     }
 
     // vérifie les données doublés
