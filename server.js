@@ -1,5 +1,4 @@
 // socket.io websocket services
-
 const port = 8899;
 const servers = {
     couleurs : [
@@ -229,3 +228,5 @@ Array.prototype.remove = function() {
     }
     return this;
 };
+
+console.log('Websocket service commence sur ws://127.0.0.1:%s, Appuyez sur Ctrl + C pour arrêter.', port);

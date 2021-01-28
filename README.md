@@ -78,20 +78,26 @@ const servers = {
 ### Diagramme du processus 
 <img style="margin:0 auto;width:40%;" src="https://i.imgur.com/M8Wm10P.png"/>
 <br/>
-## Démonstration
-<img style="margin-right:20px;width:40%;" src="https://i.imgur.com/fsCsgoF.jpg"/>
+
+### Démonstration
+#### Page d'accueil
+<img style="margin-right:10px;width:40%;" src="https://i.imgur.com/fsCsgoF.jpg"/>
 
 <br/>
 
-<img style="margin-right:20px;width:40%;" src="https://i.imgur.com/mpxNbI3.jpg"/>
+#### List d'attente
+<img style="margin-right:10px;width:40%;" src="https://i.imgur.com/AzPwvJK.jpg"/>
 
+#### Liste d'attente au match avec l'autre jouer en distance
+<img style="margin:0;width:40%;" src="https://i.imgur.com/QySAwmR.jpg"/>
 
-<img style="margin:0;width:40%;" src="https://i.imgur.com/vWAfwOd.jpg"/>
+<br/>
+ 
+#### Le joueur1 a gagné le jeux
 
+<img style="margin-right:10px;width:40%;" src="https://i.imgur.com/iV96k9B.jpg"/>
 
-<img style="margin-right:20px;width:40%;" src="https://i.imgur.com/IZ1Y5su.jpg"/>
-
-
-<img style="margin:0 auto;width:40%;" src="https://i.imgur.com/MufFMW9.jpg"/>
+#### Le joueur2 a perdu le jeux
+<img style="margin:0 auto;width:40%;" src="https://i.imgur.com/Imw4Cuq.jpg"/>
 
 
